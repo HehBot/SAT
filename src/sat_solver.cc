@@ -136,3 +136,16 @@ void sat_solver::print() const
         std::cout << '~';
     std::cout << var_name[it2->i] << ")\n";
 }
+
+void sat_solver::write_to_file(char const* filename) const
+{
+    std::ofstream f(filename);
+    for (auto const& c : s) {
+        for (auto const& l : c) {
+            if (l.is_neg)
+                f << '~';
+            f << var_name[l.i] << ' ';
+        }
+        f << '\n';
+    }
+}

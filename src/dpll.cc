@@ -90,12 +90,12 @@ bool dpll::is_sat(std::vector<value>& model) const
     static std::random_device rd;
     static std::mt19937 eng(rd());
     static std::uniform_int_distribution<> distr(0, 1);
-    m[v] = (distr(eng) == 1 ? value::t : value::f);
-    value original = m[v];
+    bool original = distr(eng);
+    m[v] = (original ? value::t : value::f);
 
 #ifdef DEBUG
     std::string curr_prefix = prefix;
-    std::cout << prefix << "Branch: " << var_name[v] << " = 1\n";
+    std::cout << prefix << "Branch: " << var_name[v] << " = " << (original ? 1 : 0) << '\n';
     prefix += "    ";
 #endif
 
@@ -105,17 +105,13 @@ bool dpll::is_sat(std::vector<value>& model) const
     }
 
 #ifdef DEBUG
-    std::cout << curr_prefix << "Backtrack: " << var_name[v] << " = 0\n";
+    std::cout << curr_prefix << "Backtrack: " << var_name[v] << " = " << (!original ? 1 : 0) << '\n';
+    ;
     prefix = curr_prefix + "    ";
 #endif
 
-    m = model;
-    m[v] = (original == value::t ? value::f : value::t);
-    if (is_sat(m)) {
-        model = m;
-        return true;
-    }
-    return false;
+    model[v] = (!original ? value::t : value::f);
+    return is_sat(model);
 }
 
 bool dpll::is_sat(std::map<std::string, bool>& model) const

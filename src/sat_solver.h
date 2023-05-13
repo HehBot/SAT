@@ -52,6 +52,7 @@ public:
     sat_solver(std::set<std::set<literal>> s, std::size_t no_of_var);
     virtual bool is_sat(std::map<std::string, bool>& model) const = 0;
     virtual void print() const;
+    virtual void write_to_file(char const* filename) const;
 };
 
 #endif // SAT_SOLVER_H

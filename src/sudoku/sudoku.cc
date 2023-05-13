@@ -1,21 +1,19 @@
 #include "sudoku.h"
 
-#include "../dpll.h"
-#include "../sat_solver.h"
-
 #include <cmath>
+#include <dpll.h>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
 
 using literal = sat_solver::literal;
 
-std::size_t next_var = 0;
+static std::size_t next_var = 0;
 
-void sum_equals_one(std::set<std::set<literal>>& s, std::vector<std::size_t> const& vars)
+static void sum_equals_one(std::set<std::set<literal>>& s, std::vector<std::size_t> const& vars)
 {
     literal si(next_var++);
     literal siprev;
@@ -28,7 +26,6 @@ void sum_equals_one(std::set<std::set<literal>>& s, std::vector<std::size_t> con
         si.i = next_var++;
 
         std::set<std::set<literal>> X({ { literal(vars[i]).neg(), si }, { literal(siprev).neg(), si }, { siprev.neg(), literal(vars[i]).neg() } });
-
         s.insert(X.begin(), X.end());
 
         at_least_one_true.insert(literal(vars[i]));
@@ -39,7 +36,7 @@ void sum_equals_one(std::set<std::set<literal>>& s, std::vector<std::size_t> con
     s.insert(std::set({ si.neg(), literal(vars[vars.size() - 1]).neg() }));
 }
 
-std::size_t v(std::size_t i, std::size_t j, std::size_t k, std::size_t N)
+inline std::size_t v(std::size_t i, std::size_t j, std::size_t k, std::size_t N)
 {
     return k + N * (j + N * i);
 }
@@ -94,6 +91,7 @@ bool sudoku_solver(std::vector<std::vector<std::size_t>>& board)
     }
 
     dpll solver(s, next_var);
+    solver.write_to_file("sudoku.sat");
     std::map<std::string, bool> ans;
     bool sat = solver.is_sat(ans);
 
@@ -126,22 +124,20 @@ void print_board(std::vector<std::vector<std::size_t>> const& board)
     }
 }
 
-std::vector<std::vector<std::size_t>> create_board(char const* s)
+std::vector<std::vector<std::size_t>> read_board(char const* s)
 {
     std::vector<std::vector<std::size_t>> board;
 
-    std::stringstream ss(s);
+    std::ifstream f(s);
     std::string to;
 
-    if (s != nullptr) {
-        while (std::getline(ss, to, '\n')) {
-            if (to.length() == 0)
-                continue;
-            std::vector<std::size_t> line;
-            for (char c : to)
-                line.push_back(c - '0');
-            board.push_back(line);
-        }
+    while (std::getline(f, to, '\n')) {
+        if (to.length() == 0)
+            continue;
+        std::vector<std::size_t> line;
+        for (char c : to)
+            line.push_back(c - '0');
+        board.push_back(line);
     }
 
     return board;

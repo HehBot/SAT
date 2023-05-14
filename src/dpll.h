@@ -8,8 +8,6 @@
 
 class dpll : public sat_solver {
     void unit_propagate(std::vector<value>& m) const;
-    static std::size_t choose(std::vector<value>& m);
-
     bool is_sat(std::vector<value>& model) const;
 
 public:

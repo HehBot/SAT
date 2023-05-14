@@ -7,14 +7,24 @@ BUILD_DIR := build
 BIN_DIR := bin
 
 SRCS := $(shell find $(SRC_DIR) -name '*.cc')
-OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
+PROD_OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+PROD_DEPS := $(PROD_OBJS:.o=.d)
+DEBUG_OBJS := $(SRCS:%=$(BUILD_DIR)/%.DEBUG.o)
+DEBUG_DEPS := $(DEBUG_OBJS:.o=.d)
 
 INC_FLAGS := $(addprefix -I,$(SRC_DIR))
 
 CXXFLAGS := --std=c++20 -g $(INC_FLAGS) -MMD -MP
 
-$(BIN_DIR)/main: $(OBJS)
+all: prod debug
+prod: $(BIN_DIR)/main
+debug: $(BIN_DIR)/main.DEBUG
+
+$(BIN_DIR)/main: $(PROD_OBJS)
+	@mkdir -p $(dir $@)
+	$(LD) -o $@ $^
+
+$(BIN_DIR)/main.DEBUG: $(DEBUG_OBJS)
 	@mkdir -p $(dir $@)
 	$(LD) -o $@ $^
 
@@ -22,7 +32,11 @@ $(BUILD_DIR)/%.cc.o: %.cc
 	@mkdir -p $(dir $@)
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-.PHONY: clean
+$(BUILD_DIR)/%.cc.DEBUG.o: %.cc
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(CXXFLAGS) -DDEBUG -o $@ $<
+
+.PHONY: all clean prod debug
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 

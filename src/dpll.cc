@@ -4,7 +4,6 @@
     #include <iostream>
 #endif
 #include <map>
-#include <random>
 #include <vector>
 
 #ifdef DEBUG
@@ -43,26 +42,11 @@ void dpll::unit_propagate(std::vector<value>& m) const
         }
     } while (changed);
 }
-std::size_t dpll::choose(std::vector<value>& m)
-{
-    std::size_t i;
-    std::vector<std::size_t> candidates;
-    for (i = 0; i < m.size(); ++i) {
-        if (m[i] == value::u)
-            candidates.push_back(i);
-    }
-    if (candidates.size() == 0)
-        return m.size();
-    static std::random_device rd;
-    static std::mt19937 eng(rd());
-    std::uniform_int_distribution<> distr(0, candidates.size() - 1);
-    return candidates[distr(eng)];
-}
 
 bool dpll::is_sat(std::vector<value>& model) const
 {
     {
-        value V = evaluate(s, model);
+        value V = evaluate(model);
 #ifdef DEBUG
         std::cout << prefix << "Evaluate: " << (V == value::u ? "unassigned" : V == value::t ? "1"
                                                                                              : "0")
@@ -76,7 +60,7 @@ bool dpll::is_sat(std::vector<value>& model) const
 
     std::size_t v = choose(model);
     if (v == model.size()) {
-        value V = evaluate(s, model);
+        value V = evaluate(model);
 #ifdef DEBUG
         std::cout << prefix << "Evaluate: " << (V == value::u ? "unassigned" : V == value::t ? "1"
                                                                                              : "0")
@@ -86,11 +70,7 @@ bool dpll::is_sat(std::vector<value>& model) const
     }
 
     std::vector<value> m = model;
-
-    static std::random_device rd;
-    static std::mt19937 eng(rd());
-    static std::uniform_int_distribution<> distr(0, 1);
-    bool original = distr(eng);
+    bool original = rand_bool();
     m[v] = (original ? value::t : value::f);
 
 #ifdef DEBUG

@@ -35,24 +35,27 @@ public:
             return !is_neg && l.is_neg;
         }
     };
-
-protected:
     enum class value {
         t,
         f,
         u
     };
-    static value evaluate(std::set<std::set<literal>> const& s, std::vector<value>& m);
+
+protected:
+    static std::size_t choose(std::vector<value>& m);
+    static bool rand_bool();
+    value evaluate(std::vector<value>& m) const;
 
     std::vector<std::string> var_name;
-    std::set<std::set<literal>> s;
+    mutable std::set<std::set<literal>> s;
 
 public:
     sat_solver(char const* filename);
     sat_solver(std::set<std::set<literal>> s, std::size_t no_of_var);
     virtual bool is_sat(std::map<std::string, bool>& model) const = 0;
-    virtual void print() const;
-    virtual void write_to_file(char const* filename) const;
+    void print() const;
+    void print_clause(std::set<literal> clause) const;
+    void write_to_file(char const* filename) const;
 };
 
 #endif // SAT_SOLVER_H

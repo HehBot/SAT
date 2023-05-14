@@ -1,0 +1,38 @@
+#ifndef IMPL_H
+#define IMPL_H
+
+#include "sat_solver.h"
+
+#include <map>
+#include <set>
+#include <vector>
+
+class impl {
+    using literal = sat_solver::literal;
+    using value = sat_solver::value;
+
+    std::vector<literal> literals;
+    std::map<literal, std::size_t> indices;
+    std::vector<std::set<std::size_t>> adj, back_adj;
+
+    void get_roots_helper(std::size_t n, std::vector<bool>& visited, std::set<size_t>& ans) const;
+    void prune_helper(std::size_t n, std::vector<bool>& stays);
+
+#ifdef DEBUG
+    std::vector<std::string> const var_name;
+#endif
+
+public:
+#ifndef DEBUG
+    impl() = default;
+#else
+    impl(std::vector<std::string> const& var_name);
+#endif
+    void add_vertex(literal const& n);
+    void add_edge(literal const& n1, literal const& n2);
+
+    void get_roots(std::set<literal> const& erring_clause, std::set<literal>& conf_clause) const;
+    void prune(literal const& l, std::vector<value>& M);
+};
+
+#endif // IMPL_H

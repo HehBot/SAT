@@ -1,5 +1,6 @@
 #include "sudoku.h"
 
+#include <cdcl.h>
 #include <cmath>
 #include <dpll.h>
 #include <fstream>
@@ -90,8 +91,9 @@ bool sudoku_solver(std::vector<std::vector<std::size_t>>& board)
         }
     }
 
-    dpll solver(s, next_var);
-    solver.write_to_file("sudoku.sat");
+    //     dpll solver(s, next_var);
+    cdcl solver(s, next_var);
+    solver.write_to_file("sudoku_cdcl.sat");
     std::map<std::string, bool> ans;
     bool sat = solver.is_sat(ans);
 

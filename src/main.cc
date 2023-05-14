@@ -1,3 +1,4 @@
+#include "cdcl.h"
 #include "dpll.h"
 #include "sudoku/sudoku.h"
 
@@ -22,7 +23,7 @@ int main(int argc, char* argv[])
         } else
             std::cout << "Unsolvable board\n";
     } else if (std::string(argv[1]) == "sat") {
-        dpll solver(argv[3]);
+        cdcl solver(argv[3]);
         solver.print();
         std::map<std::string, bool> m;
         if (solver.is_sat(m)) {

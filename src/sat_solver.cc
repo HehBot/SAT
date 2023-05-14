@@ -3,16 +3,37 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <random>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 
-sat_solver::value sat_solver::evaluate(std::set<std::set<literal>> const& s, std::vector<value>& m)
-{
-    if (s.empty())
-        return value::t;
+static std::random_device rd;
+static std::mt19937 eng(rd());
 
+bool sat_solver::rand_bool()
+{
+    static std::uniform_int_distribution<> distr(0, 1);
+    return distr(eng);
+}
+
+std::size_t sat_solver::choose(std::vector<value>& m)
+{
+    std::size_t i;
+    std::vector<std::size_t> candidates;
+    for (i = 0; i < m.size(); ++i) {
+        if (m[i] == value::u)
+            candidates.push_back(i);
+    }
+    if (candidates.size() == 0)
+        return m.size();
+    std::uniform_int_distribution<> distr(0, candidates.size() - 1);
+    return candidates[distr(eng)];
+}
+
+sat_solver::value sat_solver::evaluate(std::vector<value>& m) const
+{
     bool found_unassigned_clause = false;
     for (auto const& c : s) {
         bool found_true_lit = false;
@@ -116,7 +137,7 @@ void sat_solver::print() const
     for (it = s.begin(); std::next(it) != s.end(); ++it) {
         std::cout << '(';
         std::set<literal>::iterator it2;
-        for (it2 = (*it).begin(); std::next(it2) != (*it).end(); ++it2) {
+        for (it2 = it->begin(); std::next(it2) != it->end(); ++it2) {
             if (it2->is_neg)
                 std::cout << '~';
             std::cout << var_name[it2->i] << " \u2228 ";
@@ -127,7 +148,7 @@ void sat_solver::print() const
     }
     std::cout << '(';
     std::set<literal>::iterator it2;
-    for (it2 = (*it).begin(); std::next(it2) != (*it).end(); ++it2) {
+    for (it2 = it->begin(); std::next(it2) != it->end(); ++it2) {
         if (it2->is_neg)
             std::cout << '~';
         std::cout << var_name[it2->i] << " \u2228 ";
@@ -135,6 +156,20 @@ void sat_solver::print() const
     if (it2->is_neg)
         std::cout << '~';
     std::cout << var_name[it2->i] << ")\n";
+}
+
+void sat_solver::print_clause(std::set<literal> cl) const
+{
+    auto it = cl.begin();
+    std::cout << '(';
+    for (; std::next(it) != cl.end(); ++it) {
+        if (it->is_neg)
+            std::cout << '~';
+        std::cout << var_name[it->i] << " \u2228 ";
+    }
+    if (it->is_neg)
+        std::cout << '~';
+    std::cout << var_name[it->i] << ')';
 }
 
 void sat_solver::write_to_file(char const* filename) const

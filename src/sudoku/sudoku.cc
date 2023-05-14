@@ -42,7 +42,7 @@ inline std::size_t v(std::size_t i, std::size_t j, std::size_t k, std::size_t N)
     return k + N * (j + N * i);
 }
 
-bool sudoku_solver(std::vector<std::vector<std::size_t>>& board)
+bool sudoku_solver(std::vector<std::vector<std::size_t>>& board, sat_solver* solver)
 {
     std::size_t const n2 = board.size();
     std::size_t const n = std::sqrt(n2);
@@ -91,11 +91,9 @@ bool sudoku_solver(std::vector<std::vector<std::size_t>>& board)
         }
     }
 
-    //     dpll solver(s, next_var);
-    cdcl solver(s, next_var);
-    solver.write_to_file("sudoku_cdcl.sat");
+    solver->add_clauses(s);
     std::map<std::string, bool> ans;
-    bool sat = solver.is_sat(ans);
+    bool sat = solver->is_sat(ans);
 
     if (sat) {
         for (std::size_t i = 0; i < n2; ++i) {

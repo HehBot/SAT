@@ -27,6 +27,7 @@ public:
     impl() = default;
 #else
     impl(std::vector<std::string> const& var_name);
+    void write_to_file(char const* filename) const;
 #endif
     void add_vertex(literal const& n);
     void add_edge(literal const& n1, literal const& n2);

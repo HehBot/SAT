@@ -47,12 +47,15 @@ protected:
     value evaluate(std::vector<value>& m) const;
 
     std::vector<std::string> var_name;
+    std::map<std::string, std::size_t> var_name_indices;
     mutable std::set<std::set<literal>> s;
 
 public:
-    sat_solver(char const* filename);
-    sat_solver(std::set<std::set<literal>> s, std::size_t no_of_var);
+    sat_solver() = default;
+    sat_solver(std::set<std::set<literal>> s);
     virtual bool is_sat(std::map<std::string, bool>& model) const = 0;
+    void add_clauses(std::set<std::set<literal>> const& clauses);
+    void add_clauses_from_file(char const* filename);
     void print() const;
     void print_clause(std::set<literal> clause) const;
     void write_to_file(char const* filename) const;

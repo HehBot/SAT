@@ -78,7 +78,9 @@ sat_solver::value cdcl::unit_propagate(std::vector<value>& m, impl& graph, std::
             else {
                 erring_clause = c;
 #ifdef DEBUG
-                std::cout << prefix << "Evaluate: 0\n";
+                std::cout << prefix << "Evaluate: 0: ";
+                print_clause(c);
+                std::cout << '\n';
 #endif
                 return value::f;
             }
@@ -117,10 +119,14 @@ bool cdcl::is_sat(std::vector<value>& model) const
                 return false;
             std::set<literal> conf_clause;
             graph.get_roots(erring_clause, conf_clause);
+
+            if (conf_clause.empty())
+                return false;
+
             s.insert(conf_clause);
 
             literal last_decision;
-
+            bool found_backtracking_decision = false;
             for (auto it = decisions.rbegin(); it != decisions.rend(); ++it) {
                 literal l = *it;
                 l.is_neg = !l.is_neg;
@@ -128,18 +134,20 @@ bool cdcl::is_sat(std::vector<value>& model) const
                     decisions.erase((++it).base());
                     l.is_neg = !l.is_neg;
                     last_decision = l;
+                    found_backtracking_decision = true;
                     break;
                 }
             }
+            if (!found_backtracking_decision)
+                return false;
 #ifdef DEBUG
             prefix = last_prefix;
-            std::cout << prefix << "Backtrack: ";
-            print_clause(erring_clause);
-            std::cout << "; Clause added: ";
+            std::cout << prefix << "Backtracking on " << var_name[last_decision.i] << ", clause added: ";
             print_clause(conf_clause);
             std::cout << '\n';
 #endif
             graph.prune(last_decision, M);
+            graph.add_vertex(literal(last_decision.i, !last_decision.is_neg));
         } else if (V == value::u) {
             std::size_t z = choose(M);
             bool new_value = rand_bool();

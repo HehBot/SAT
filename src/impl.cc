@@ -1,6 +1,7 @@
 #include "impl.h"
 
 #ifdef DEBUG
+    #include <fstream>
     #include <iostream>
 #endif
 #include <set>
@@ -11,6 +12,22 @@ extern std::string prefix;
 impl::impl(std::vector<std::string> const& var_name)
     : var_name(var_name)
 {
+}
+
+void impl::write_to_file(char const* filename) const
+{
+    std::ofstream f(filename);
+    f << "digraph {\n";
+    for (std::size_t i = 0; i < adj.size(); ++i) {
+        literal l = literals[i];
+        f << "    \"" << (l.is_neg ? "~" : "") << var_name[l.i] << "\" -> { ";
+        for (auto j : adj[i]) {
+            literal lj = literals[j];
+            f << "\"" << (lj.is_neg ? "~" : "") << var_name[lj.i] << "\" ";
+        }
+        f << "}\n";
+    }
+    f << "}";
 }
 #endif
 
@@ -63,7 +80,7 @@ void impl::get_roots(std::set<literal> const& erring_clause, std::set<literal>& 
 
     for (auto n : erring_clause) {
         n.is_neg = !n.is_neg;
-        if (indices.contains(n) && adj[indices.at(n)].empty())
+        if (indices.contains(n))
             get_roots_helper(indices.at(n), visited, ans);
     }
 

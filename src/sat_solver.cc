@@ -73,10 +73,37 @@ static std::string get_alphanum(std::ifstream& f)
     f.unget();
     return s;
 }
-sat_solver::sat_solver(char const* filename)
+
+sat_solver::sat_solver(std::set<std::set<literal>> clauses)
+    : s(clauses)
+{
+    for (auto const& c : clauses)
+        for (literal const& l : c) {
+            if (l.i >= var_name.size())
+                var_name.resize(l.i, "");
+            if (var_name[l.i].length() == 0) {
+                var_name[l.i] = std::to_string(l.i);
+                var_name_indices[std::to_string(l.i)] = l.i;
+            }
+        }
+}
+
+void sat_solver::add_clauses(std::set<std::set<literal>> const& clauses)
+{
+    for (auto const& c : clauses)
+        for (literal const& l : c) {
+            if (l.i >= var_name.size())
+                var_name.resize(l.i + 1, "");
+            if (var_name[l.i].length() == 0) {
+                var_name[l.i] = std::to_string(l.i);
+                var_name_indices[std::to_string(l.i)] = l.i;
+            }
+        }
+    s.insert(clauses.begin(), clauses.end());
+}
+void sat_solver::add_clauses_from_file(char const* filename)
 {
     std::ifstream f(filename);
-    std::unordered_map<std::string, std::size_t> names;
 
     char z = f.get();
     while (!f.eof()) {
@@ -95,11 +122,11 @@ sat_solver::sat_solver(char const* filename)
             }
 
             std::string n = get_alphanum(f);
-            if (!names.contains(n)) {
-                names[n] = var_name.size();
+            if (!var_name_indices.contains(n)) {
+                var_name_indices[n] = var_name.size();
                 var_name.push_back(n);
             }
-            l.i = names[n];
+            l.i = var_name_indices[n];
 
             if (!clause.contains(literal(l.i, !l.is_neg)))
                 clause.insert(l);
@@ -119,49 +146,31 @@ sat_solver::sat_solver(char const* filename)
         z = f.get();
     }
 }
-sat_solver::sat_solver(std::set<std::set<literal>> s, std::size_t no_of_var)
-    : s(s)
-{
-    for (auto const& c : s)
-        for (literal const& l : c)
-            if (l.i >= no_of_var)
-                throw std::invalid_argument("Bad formula");
-    var_name.reserve(no_of_var);
-    for (std::size_t i = 0; i < no_of_var; ++i)
-        var_name.push_back(std::to_string(i));
-}
 
 void sat_solver::print() const
 {
-    std::set<std::set<literal>>::iterator it;
+    std::cout << "Formula(";
+    if (s.empty()) {
+        std::cout << ')';
+        return;
+    }
+    auto it = s.begin();
     for (it = s.begin(); std::next(it) != s.end(); ++it) {
-        std::cout << '(';
-        std::set<literal>::iterator it2;
-        for (it2 = it->begin(); std::next(it2) != it->end(); ++it2) {
-            if (it2->is_neg)
-                std::cout << '~';
-            std::cout << var_name[it2->i] << " \u2228 ";
-        }
-        if (it2->is_neg)
-            std::cout << '~';
-        std::cout << var_name[it2->i] << ") \u2227 ";
+        print_clause(*it);
+        std::cout << " \u2227 ";
     }
-    std::cout << '(';
-    std::set<literal>::iterator it2;
-    for (it2 = it->begin(); std::next(it2) != it->end(); ++it2) {
-        if (it2->is_neg)
-            std::cout << '~';
-        std::cout << var_name[it2->i] << " \u2228 ";
-    }
-    if (it2->is_neg)
-        std::cout << '~';
-    std::cout << var_name[it2->i] << ")\n";
+    print_clause(*it);
+    std::cout << ')';
 }
 
 void sat_solver::print_clause(std::set<literal> cl) const
 {
-    auto it = cl.begin();
     std::cout << '(';
+    if (cl.empty()) {
+        std::cout << ')';
+        return;
+    }
+    auto it = cl.begin();
     for (; std::next(it) != cl.end(); ++it) {
         if (it->is_neg)
             std::cout << '~';

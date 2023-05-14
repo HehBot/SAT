@@ -13,12 +13,9 @@ class cdcl : public sat_solver {
     bool is_sat(std::vector<value>& model) const;
 
 public:
-    cdcl(char const* filename)
-        : sat_solver(filename)
-    {
-    }
-    cdcl(std::set<std::set<literal>> s, std::size_t no_of_var)
-        : sat_solver(s, no_of_var)
+    cdcl() = default;
+    cdcl(std::set<std::set<literal>> s)
+        : sat_solver(s)
     {
     }
     virtual bool is_sat(std::map<std::string, bool>& model) const override;

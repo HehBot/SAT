@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -124,21 +125,30 @@ void print_board(std::vector<std::vector<std::size_t>> const& board)
     }
 }
 
+static std::size_t char_to_num(char c)
+{
+    if (c <= '9' && c >= '0')
+        return c - '0';
+    else if (c <= 'z' && c >= 'a')
+        return (c - 'a') + 10;
+    throw std::invalid_argument("Bad sudoku file");
+}
+
 std::vector<std::vector<std::size_t>> read_board(char const* s)
 {
-    std::vector<std::vector<std::size_t>> board;
-
+    std::vector<std::size_t> buf;
     std::ifstream f(s);
-    std::string to;
+    std::size_t z;
 
-    while (std::getline(f, to, '\n')) {
-        if (to.length() == 0)
-            continue;
-        std::vector<std::size_t> line;
-        for (char c : to)
-            line.push_back(c - '0');
-        board.push_back(line);
-    }
+    while (f >> z)
+        buf.push_back(z);
 
+    std::size_t const n4 = buf.size();
+    std::size_t n2 = std::sqrt(n4);
+
+    std::vector<std::vector<std::size_t>> board(n2);
+    for (std::size_t i = 0; i < n2; ++i)
+        for (std::size_t j = 0; j < n2; ++j)
+            board[i].push_back(buf[n2 * i + j]);
     return board;
 }

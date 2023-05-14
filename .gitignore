@@ -2,3 +2,5 @@ build/
 bin/
 **.sat
 **.sudoku
+!test/*/*.sat
+!test/*/*.sudoku

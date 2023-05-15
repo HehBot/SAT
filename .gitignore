@@ -1,6 +1,13 @@
 build/
 bin/
+
 **.sat
 **.sudoku
-!test/*/*.sat
-!test/*/*.sudoku
+**.cdcl
+!test/sat/*.sat
+!test/sudoku/*.sudoku
+
+gmon.out
+**.stats
+**.dot
+**.svg

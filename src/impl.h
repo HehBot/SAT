@@ -11,10 +11,12 @@ class impl {
     using literal = sat_solver::literal;
     using value = sat_solver::value;
 
+    std::vector<bool> is_valid;
     std::vector<literal> literals;
     std::map<literal, std::size_t> indices;
     std::vector<std::set<std::size_t>> adj, back_adj;
 
+    std::size_t get_free_slot() const;
     void get_roots_helper(std::size_t n, std::vector<bool>& visited, std::set<size_t>& ans) const;
     void prune_helper(std::size_t n, std::vector<bool>& stays);
 

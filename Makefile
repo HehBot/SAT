@@ -40,4 +40,5 @@ $(BUILD_DIR)/%.cc.DEBUG.o: %.cc
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 
--include $(DEPS)
+-include $(PROD_DEPS)
+-include $(DEBUG_DEPS)

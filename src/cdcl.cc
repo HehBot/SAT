@@ -109,8 +109,6 @@ bool cdcl::is_sat(std::vector<value>& model) const
     std::set<literal> erring_clause;
     std::vector<value> M = model;
 
-    std::string last_prefix;
-
     while (true) {
         erring_clause.clear();
         value V = unit_propagate(M, graph, erring_clause);
@@ -141,13 +139,12 @@ bool cdcl::is_sat(std::vector<value>& model) const
             if (!found_backtracking_decision)
                 return false;
 #ifdef DEBUG
-            prefix = last_prefix;
+            prefix = prefix.substr(0, prefix.length() - 4);
             std::cout << prefix << "Backtracking on " << var_name[last_decision.i] << ", clause added: ";
             print_clause(conf_clause);
             std::cout << '\n';
 #endif
             graph.prune(last_decision, M);
-            graph.add_vertex(literal(last_decision.i, !last_decision.is_neg));
         } else if (V == value::u) {
             std::size_t z = choose(M);
             bool new_value = rand_bool();
@@ -156,7 +153,6 @@ bool cdcl::is_sat(std::vector<value>& model) const
             graph.add_vertex(literal(z, !new_value));
 #ifdef DEBUG
             std::cout << prefix << "Branch: " << var_name[z] << " = " << new_value << '\n';
-            last_prefix = prefix;
             prefix += "    ";
 #endif
         } else {

@@ -19,6 +19,8 @@ void impl::write_to_file(char const* filename) const
     std::ofstream f(filename);
     f << "digraph {\n";
     for (std::size_t i = 0; i < adj.size(); ++i) {
+        if (!is_valid[i])
+            continue;
         literal l = literals[i];
         f << "    \"" << (l.is_neg ? "~" : "") << var_name[l.i] << "\" -> { ";
         for (auto j : adj[i]) {
@@ -31,13 +33,33 @@ void impl::write_to_file(char const* filename) const
 }
 #endif
 
+std::size_t impl::get_free_slot() const
+{
+    std::size_t i = 0;
+    for (; i < is_valid.size(); ++i) {
+        if (!is_valid[i])
+            return i;
+    }
+    return i;
+}
+
 void impl::add_vertex(literal const& n)
 {
     if (!indices.contains(n)) {
-        indices[n] = literals.size();
-        literals.push_back(n);
-        adj.push_back(std::set<std::size_t>());
-        back_adj.push_back(std::set<std::size_t>());
+        std::size_t k = get_free_slot();
+        if (k == is_valid.size()) {
+            indices[n] = literals.size();
+            literals.push_back(n);
+            is_valid.push_back(true);
+            adj.emplace_back();
+            back_adj.emplace_back();
+        } else {
+            indices[n] = k;
+            literals[k] = n;
+            is_valid[k] = true;
+            adj[k].clear();
+            back_adj[k].clear();
+        }
     }
 }
 
@@ -48,13 +70,9 @@ void impl::add_edge(literal const& n1, literal const& n2)
         k1 = indices[n1];
     else
         return;
-    if (!indices.contains(n2)) {
-        k2 = indices[n2] = literals.size();
-        literals.push_back(n2);
-        adj.push_back(std::set<std::size_t>());
-        back_adj.push_back(std::set<std::size_t>());
-    } else
-        k2 = indices[n2];
+    if (!indices.contains(n2))
+        add_vertex(n2);
+    k2 = indices[n2];
     adj[k1].insert(k2);
     back_adj[k2].insert(k1);
 }
@@ -94,6 +112,7 @@ void impl::get_roots(std::set<literal> const& erring_clause, std::set<literal>& 
 
 void impl::prune_helper(std::size_t n, std::vector<bool>& stays)
 {
+    is_valid[n] = false;
     stays[n] = false;
     for (std::size_t parent : back_adj[n])
         adj[parent].erase(n);
@@ -107,21 +126,13 @@ void impl::prune(literal const& l, std::vector<value>& M)
 {
     std::vector<bool> stays(literals.size(), true);
     prune_helper(indices[l], stays);
-    std::size_t i = 0;
-    indices.clear();
-    while (i != stays.size()) {
-        if (!stays[i]) {
+    for (std::size_t i = 0; i < is_valid.size(); ++i) {
+        if (!is_valid[i] && !stays[i]) {
 #ifdef DEBUG
-            std::cout << prefix << "    " << var_name[literals[i].i] << " = unassigned\n";
+            std::cout << prefix << "  " << var_name[literals[i].i] << " = unassigned\n";
 #endif
             M[literals[i].i] = value::u;
-            adj.erase(adj.begin() + i);
-            back_adj.erase(back_adj.begin() + i);
-            literals.erase(literals.begin() + i);
-            stays.erase(stays.begin() + i);
-        } else {
-            indices[literals[i]] = i;
-            ++i;
+            indices.erase(literals[i]);
         }
     }
 }

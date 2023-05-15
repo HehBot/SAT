@@ -57,7 +57,7 @@ public:
     void add_clauses(std::set<std::set<literal>> const& clauses);
     void add_clauses_from_file(char const* filename);
     void print() const;
-    void print_clause(std::set<literal> clause) const;
+    void print_clause(std::set<literal> const& clause) const;
     void write_to_file(char const* filename) const;
 };
 

@@ -163,7 +163,7 @@ void sat_solver::print() const
     std::cout << ')';
 }
 
-void sat_solver::print_clause(std::set<literal> cl) const
+void sat_solver::print_clause(std::set<literal> const& cl) const
 {
     std::cout << '(';
     if (cl.empty()) {

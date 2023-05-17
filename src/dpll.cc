@@ -4,6 +4,7 @@
     #include <iostream>
 #endif
 #include <map>
+#include <set>
 #include <vector>
 
 #ifdef DEBUG
@@ -45,27 +46,12 @@ void dpll::unit_propagate(std::vector<value>& m) const
 
 bool dpll::is_sat(std::vector<value>& model) const
 {
-    {
-        value V = evaluate(model);
-#ifdef DEBUG
-        std::cout << prefix << "Evaluate: " << (V == value::u ? "unassigned" : V == value::t ? "1"
-                                                                                             : "0")
-                  << '\n';
-#endif
-        if (V != value::u)
-            return (V == value::t);
-    }
-
     unit_propagate(model);
 
     std::size_t v = choose(model);
+    std::set<literal> erring_clause;
     if (v == model.size()) {
-        value V = evaluate(model);
-#ifdef DEBUG
-        std::cout << prefix << "Evaluate: " << (V == value::u ? "unassigned" : V == value::t ? "1"
-                                                                                             : "0")
-                  << '\n';
-#endif
+        value V = evaluate(model, erring_clause);
         return (V == value::t);
     }
 
@@ -86,7 +72,6 @@ bool dpll::is_sat(std::vector<value>& model) const
 
 #ifdef DEBUG
     std::cout << curr_prefix << "Backtrack: " << var_name[v] << " = " << (!original ? 1 : 0) << '\n';
-    ;
     prefix = curr_prefix + "    ";
 #endif
 

@@ -32,7 +32,7 @@ std::size_t sat_solver::choose(std::vector<value>& m)
     return candidates[distr(eng)];
 }
 
-sat_solver::value sat_solver::evaluate(std::vector<value>& m) const
+sat_solver::value sat_solver::evaluate(std::vector<value> const& m, std::set<literal>& erring_clause) const
 {
     bool found_unassigned_clause = false;
     for (auto const& c : s) {
@@ -49,12 +49,26 @@ sat_solver::value sat_solver::evaluate(std::vector<value>& m) const
         if (!found_true_lit) {
             if (found_unassigned_lit)
                 found_unassigned_clause = true;
-            else
+            else {
+                erring_clause = c;
+#ifdef DEBUG
+                std::cout << prefix << "Evaluate: 0: ";
+                print_clause(c);
+                std::cout << '\n';
+#endif
                 return value::f;
+            }
         }
     }
-    if (found_unassigned_clause)
+    if (found_unassigned_clause) {
+#ifdef DEBUG
+        std::cout << prefix << "Evaluate: unassigned\n";
+#endif
         return value::u;
+    }
+#ifdef DEBUG
+    std::cout << prefix << "Evaluate: 1\n";
+#endif
     return value::t;
 }
 

@@ -8,18 +8,7 @@
 #include <string>
 #include <vector>
 
-#ifdef DEBUG
-std::string prefix = "";
-#endif
-
-// bool unit_propagate(std::vector<value>& m, impl& i, std::set<literal>& c)
-//      Unit propagates and updates i
-//      Returns
-//          value::f if unit propagation causes contradiction, c is set to erring clause
-//          value::t if m satisfies the formula
-//          value::u if formula is unassigned
-
-sat_solver::value cdcl::unit_propagate(std::vector<value>& m, impl& graph, std::set<literal>& erring_clause) const
+void cdcl::unit_propagate(std::vector<value>& m, impl& graph) const
 {
     // unit propagating maximally
     bool changed;
@@ -58,44 +47,6 @@ sat_solver::value cdcl::unit_propagate(std::vector<value>& m, impl& graph, std::
             }
         }
     } while (changed);
-
-    // evaluating
-    bool found_unassigned_clause = false;
-    for (auto const& c : s) {
-        bool found_true_lit = false;
-        bool found_unassigned_lit = false;
-        for (literal l : c) {
-            if (m[l.i] == value::u)
-                found_unassigned_lit = true;
-            else if ((m[l.i] == value::f) == l.is_neg) {
-                found_true_lit = true;
-                break;
-            }
-        }
-        if (!found_true_lit) {
-            if (found_unassigned_lit)
-                found_unassigned_clause = true;
-            else {
-                erring_clause = c;
-#ifdef DEBUG
-                std::cout << prefix << "Evaluate: 0: ";
-                print_clause(c);
-                std::cout << '\n';
-#endif
-                return value::f;
-            }
-        }
-    }
-    if (found_unassigned_clause) {
-#ifdef DEBUG
-        std::cout << prefix << "Evaluate: unassigned\n";
-#endif
-        return value::u;
-    }
-#ifdef DEBUG
-    std::cout << prefix << "Evaluate: 1\n";
-#endif
-    return value::t;
 }
 
 bool cdcl::is_sat(std::vector<value>& model) const
@@ -104,14 +55,15 @@ bool cdcl::is_sat(std::vector<value>& model) const
 #ifndef DEBUG
     impl graph;
 #else
-    impl graph(var_name);
+    impl graph(var_name, prefix);
 #endif
     std::set<literal> erring_clause;
     std::vector<value> M = model;
 
     while (true) {
         erring_clause.clear();
-        value V = unit_propagate(M, graph, erring_clause);
+        unit_propagate(M, graph);
+        value V = evaluate(M, erring_clause);
         if (V == value::f) {
             if (decisions.empty())
                 return false;

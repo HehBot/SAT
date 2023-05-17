@@ -44,11 +44,15 @@ public:
 protected:
     static std::size_t choose(std::vector<value>& m);
     static bool rand_bool();
-    value evaluate(std::vector<value>& m) const;
+    value evaluate(std::vector<value> const& m, std::set<literal>& erring_clause) const;
 
     std::vector<std::string> var_name;
     std::map<std::string, std::size_t> var_name_indices;
     mutable std::set<std::set<literal>> s;
+
+#ifdef DEBUG
+    mutable std::string prefix;
+#endif
 
 public:
     sat_solver() = default;

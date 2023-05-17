@@ -8,7 +8,7 @@
 #include <string>
 
 class cdcl : public sat_solver {
-    value unit_propagate(std::vector<value>& m, impl& graph, std::set<literal>& erring_clause) const;
+    void unit_propagate(std::vector<value>& m, impl& graph) const;
 
     bool is_sat(std::vector<value>& model) const;
 

@@ -7,10 +7,8 @@
 #include <set>
 
 #ifdef DEBUG
-extern std::string prefix;
-
-impl::impl(std::vector<std::string> const& var_name)
-    : var_name(var_name)
+impl::impl(std::vector<std::string> const& var_name, std::string& prefix)
+    : var_name(var_name), prefix(prefix)
 {
 }
 

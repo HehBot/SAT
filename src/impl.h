@@ -5,6 +5,7 @@
 
 #include <map>
 #include <set>
+#include <string>
 #include <vector>
 
 class impl {
@@ -22,13 +23,14 @@ class impl {
 
 #ifdef DEBUG
     std::vector<std::string> const var_name;
+    std::string& prefix;
 #endif
 
 public:
 #ifndef DEBUG
     impl() = default;
 #else
-    impl(std::vector<std::string> const& var_name);
+    impl(std::vector<std::string> const& var_name, std::string& prefix);
     void write_to_file(char const* filename) const;
 #endif
     void add_vertex(literal const& n);

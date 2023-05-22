@@ -6,11 +6,17 @@
 
 ## Run
 
-    $ bin/main (sat|sudoku) (dpll|cdcl) <SAT file|sudoku file>
+SAT solver
 
-To see algorithm runs (WARNING large amount of text on stdout),
+    $ bin/sat dpll <SAT file>
+    $ bin/sat cdcl <SAT file> [SAT file for learned clauses]
 
-    $ bin/main.DEBUG (sat|sudoku) (dpll|cdcl) <SAT file|sudoku file>
+Sudoku solver
+
+    $ bin/sudoku dpll <sudoku file>
+    $ bin/sudoku cdcl <sudoku file> [SAT file for learned clauses]
+
+To see algorithm runs, compile with `-DDEBUG` flag (WARNING large amount of text on stdout).
 
 ## Acknowledgement
 Tests in

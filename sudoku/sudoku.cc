@@ -1,5 +1,3 @@
-#include "sudoku.h"
-
 #include <cdcl.h>
 #include <cmath>
 #include <dpll.h>
@@ -43,12 +41,12 @@ inline std::size_t v(std::size_t i, std::size_t j, std::size_t k, std::size_t N)
     return k + N * (j + N * i);
 }
 
-bool sudoku_solver(std::vector<std::vector<std::size_t>>& board, sat_solver* solver)
+void sudoku_to_sat(std::set<std::set<literal>>& s, std::vector<std::vector<std::size_t>> const& board)
 {
     std::size_t const n2 = board.size();
     std::size_t const n = std::sqrt(n2);
 
-    std::set<std::set<literal>> s;
+    s.clear();
 
     std::size_t i = 0, j;
     for (std::vector<std::size_t> const& row : board) {
@@ -91,25 +89,6 @@ bool sudoku_solver(std::vector<std::vector<std::size_t>>& board, sat_solver* sol
             }
         }
     }
-
-    solver->add_clauses(s);
-    std::map<std::string, bool> ans;
-    bool sat = solver->is_sat(ans);
-
-    if (sat) {
-        for (std::size_t i = 0; i < n2; ++i) {
-            for (std::size_t j = 0; j < n2; ++j) {
-                for (std::size_t k = 0; k < n2; ++k) {
-                    if (ans[std::to_string(v(i, j, k, n2))]) {
-                        board[i][j] = k + 1;
-                        continue;
-                    }
-                }
-            }
-        }
-    }
-
-    return sat;
 }
 
 void print_board(std::vector<std::vector<std::size_t>> const& board)
@@ -125,19 +104,16 @@ void print_board(std::vector<std::vector<std::size_t>> const& board)
     }
 }
 
-static std::size_t char_to_num(char c)
-{
-    if (c <= '9' && c >= '0')
-        return c - '0';
-    else if (c <= 'z' && c >= 'a')
-        return (c - 'a') + 10;
-    throw std::invalid_argument("Bad sudoku file");
-}
-
 std::vector<std::vector<std::size_t>> read_board(char const* s)
 {
     std::vector<std::size_t> buf;
     std::ifstream f(s);
+
+    if (f.fail()) {
+        std::cerr << "Failed to open file " << s << '\n';
+        throw std::invalid_argument("Bad sudoku file");
+    }
+
     std::size_t z;
 
     while (f >> z)
@@ -151,4 +127,72 @@ std::vector<std::vector<std::size_t>> read_board(char const* s)
         for (std::size_t j = 0; j < n2; ++j)
             board[i].push_back(buf[n2 * i + j]);
     return board;
+}
+
+inline void print_usage(char* argv[])
+{
+    std::cerr << "Usage: " << argv[0] << " dpll <sudoku file>\n";
+    std::cerr << "       " << argv[0] << " cdcl <sudoku file> [SAT file for learned clauses]\n";
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc != 3 && argc != 4) {
+        print_usage(argv);
+        return 1;
+    }
+    auto board = read_board(argv[2]);
+    print_board(board);
+
+    std::set<std::set<literal>> s;
+    sudoku_to_sat(s, board);
+
+    bool write_learnt_clauses = false;
+
+    sat_solver* solver;
+    if (std::string("dpll") == argv[1]) {
+        if (argc == 4) {
+            print_usage(argv);
+            return 1;
+        }
+        solver = new dpll(s);
+    } else if (std::string("cdcl") == argv[1]) {
+        solver = new cdcl(s);
+        if (argc == 4) {
+            write_learnt_clauses = true;
+            std::ifstream f(argv[3]);
+            if (f.good()) {
+                f.close();
+                solver->add_clauses_from_file(argv[3]);
+            }
+        }
+    } else {
+        std::cerr << "Unknown algorithm " << argv[1] << '\n';
+        print_usage(argv);
+        return 1;
+    }
+
+    std::map<std::string, bool> ans;
+    if (solver->is_sat(ans)) {
+        std::cout << "Solution:\n";
+        std::size_t n2 = board.size();
+        for (std::size_t i = 0; i < n2; ++i) {
+            for (std::size_t j = 0; j < n2; ++j) {
+                for (std::size_t k = 0; k < n2; ++k) {
+                    if (ans[std::to_string(v(i, j, k, n2))]) {
+                        board[i][j] = k + 1;
+                        continue;
+                    }
+                }
+            }
+        }
+        print_board(board);
+    } else
+        std::cout << "Unsolvable board\n";
+
+    if (write_learnt_clauses)
+        solver->write_to_file(argv[3]);
+
+    delete solver;
+    return 0;
 }

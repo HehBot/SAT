@@ -12,7 +12,7 @@ class dpll : public sat_solver {
 
 public:
     dpll() = default;
-    dpll(std::set<std::set<literal>> s)
+    dpll(std::set<std::set<literal>> const& s)
         : sat_solver(s)
     {
     }

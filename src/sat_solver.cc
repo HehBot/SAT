@@ -88,13 +88,13 @@ static std::string get_alphanum(std::ifstream& f)
     return s;
 }
 
-sat_solver::sat_solver(std::set<std::set<literal>> clauses)
+sat_solver::sat_solver(std::set<std::set<literal>> const& clauses)
     : s(clauses)
 {
     for (auto const& c : clauses)
         for (literal const& l : c) {
             if (l.i >= var_name.size())
-                var_name.resize(l.i, "");
+                var_name.resize(l.i + 1, "");
             if (var_name[l.i].length() == 0) {
                 var_name[l.i] = std::to_string(l.i);
                 var_name_indices[std::to_string(l.i)] = l.i;
@@ -118,6 +118,11 @@ void sat_solver::add_clauses(std::set<std::set<literal>> const& clauses)
 void sat_solver::add_clauses_from_file(char const* filename)
 {
     std::ifstream f(filename);
+
+    if (f.fail()) {
+        std::cerr << "Failed to add clauses from file " << filename << '\n';
+        return;
+    }
 
     char z = f.get();
     while (!f.eof()) {
@@ -161,6 +166,7 @@ void sat_solver::add_clauses_from_file(char const* filename)
     }
 }
 
+#ifdef DEBUG
 void sat_solver::print() const
 {
     std::cout << "Formula(";
@@ -194,16 +200,20 @@ void sat_solver::print_clause(std::set<literal> const& cl) const
         std::cout << '~';
     std::cout << var_name[it->i] << ')';
 }
+#endif
 
 void sat_solver::write_to_file(char const* filename) const
 {
     std::ofstream f(filename);
     for (auto const& c : s) {
-        for (auto const& l : c) {
-            if (l.is_neg)
+        auto it = c.begin();
+        for (; std::next(it) != c.end(); ++it) {
+            if (it->is_neg)
                 f << '~';
-            f << var_name[l.i] << ' ';
+            f << var_name[it->i] << ' ';
         }
-        f << '\n';
+        if (it->is_neg)
+            f << '~';
+        f << var_name[it->i] << '\n';
     }
 }

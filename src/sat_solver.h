@@ -52,16 +52,17 @@ protected:
 
 #ifdef DEBUG
     mutable std::string prefix;
+    void print() const;
+    void print_clause(std::set<literal> const& clause) const;
 #endif
 
 public:
     sat_solver() = default;
-    sat_solver(std::set<std::set<literal>> s);
+    sat_solver(std::set<std::set<literal>> const& s);
     virtual bool is_sat(std::map<std::string, bool>& model) const = 0;
     void add_clauses(std::set<std::set<literal>> const& clauses);
     void add_clauses_from_file(char const* filename);
-    void print() const;
-    void print_clause(std::set<literal> const& clause) const;
+
     void write_to_file(char const* filename) const;
 };
 

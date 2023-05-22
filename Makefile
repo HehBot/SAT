@@ -7,50 +7,33 @@ BUILD_DIR := build
 BIN_DIR := bin
 
 SRCS := $(shell find $(SRC_DIR) -name '*.cc')
-PROD_OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
-PROD_DEPS := $(PROD_OBJS:.o=.d)
-DEBUG_OBJS := $(SRCS:%=$(BUILD_DIR)/%.DEBUG.o)
-DEBUG_DEPS := $(DEBUG_OBJS:.o=.d)
-GPROF_OBJS := $(SRCS:%=$(BUILD_DIR)/%.GPROF.o)
-GPROF_DEPS := $(GPROF_OBJS:.o=.d)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d) $(BUILD_DIR)/sudoku/sudoku.cc.d $(BUILD_DIR)/sat/sat.cc.d
 
 INC_FLAGS := $(addprefix -I,$(SRC_DIR))
 
-CXXFLAGS := --std=c++20 $(INC_FLAGS) -MMD -MP
+LDFLAGS := -g -O3
+CXXFLAGS := --std=c++20 $(INC_FLAGS) -MMD -MP -g -O3
 
-all: prod debug
-prod: $(BIN_DIR)/main
-debug: $(BIN_DIR)/main.DEBUG
-gprof: $(BIN_DIR)/main.GPROF
+all: sat sudoku
 
-$(BIN_DIR)/main: $(PROD_OBJS)
+sudoku: $(BIN_DIR)/sudoku
+sat: $(BIN_DIR)/sat
+
+$(BIN_DIR)/sudoku: $(OBJS) $(BUILD_DIR)/sudoku/sudoku.cc.o
 	@mkdir -p $(dir $@)
-	$(LD) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 
-$(BIN_DIR)/main.DEBUG: $(DEBUG_OBJS)
+$(BIN_DIR)/sat: $(OBJS) $(BUILD_DIR)/sat/sat.cc.o
 	@mkdir -p $(dir $@)
-	$(LD) -g -o $@ $^
-
-$(BIN_DIR)/main.GPROF: $(GPROF_OBJS)
-	@mkdir -p $(dir $@)
-	$(LD) -pg -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD_DIR)/%.cc.o: %.cc
 	@mkdir -p $(dir $@)
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(BUILD_DIR)/%.cc.DEBUG.o: %.cc
-	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) -g -DDEBUG -o $@ $<
-
-$(BUILD_DIR)/%.cc.GPROF.o: %.cc
-	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) -pg -o $@ $<
-
-.PHONY: all clean prod debug gprof
+.PHONY: all clean sat sudoku
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 
--include $(PROD_DEPS)
--include $(DEBUG_DEPS)
--include $(GPROF_DEPS)
+-include $(DEPS)
